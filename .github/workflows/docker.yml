@@ -13,13 +13,24 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Convert username to lowercase (FIXES YOUR ERROR)
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/lumina-lora:latest .
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ghcr.io/${OWNER_LC}/lumina-lora:latest \
+            -t ghcr.io/${OWNER_LC}/lumina-lora:${{ github.sha }} \
+            .
 
-      - name: Push image
-        run: docker push ghcr.io/${{ github.repository_owner }}/lumina-lora:latest
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${OWNER_LC}/lumina-lora:latest
+          docker push ghcr.io/${OWNER_LC}/lumina-lora:${{ github.sha }}
